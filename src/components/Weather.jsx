@@ -7,6 +7,7 @@ const Weather = () => {
 
     const [weather, setWeather] = useState(null)
     const [city, setCity] = useState("")
+    const [forecast, setForecast] = useState(null)
     const date = new Date()
     let time = date.toLocaleTimeString("en-US").slice(0,4)
     let day = date.toLocaleDateString("en-US").slice(0,4)
@@ -17,13 +18,17 @@ const Weather = () => {
             const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${import.meta.env.VITE_WEATHER_API_KEY}`)
             setWeather(response.data)
             console.log(response.data)
+            const forecast = await axios.get(` https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${import.meta.env.VITE_WEATHER_API_KEY}&units=metric`)
+
+            const dailyForecast = forecast.data.list.filter((item, index) => index % 8 === 0)
+            setForecast(dailyForecast)
+            console.log(dailyForecast)
         }
         catch (error) {
             console.log(error)
         }
         
-    }
-   
+    }   
 
     function handleInput(e) {
         setCity(e.target.value)
@@ -48,24 +53,37 @@ const Weather = () => {
       {weather && (
     <section className='weather-container px-4 py-4 mt-20 flex flex-col items-center justify-center gap-12'>
 
-        <div>
-    <div className='basic-city-info flex flex-row w-[289px] px-6 py-2 rounded-2xl items-center justify-between bg-gradient-to-br from-zinc-800 hover:opacity-80 transition-opacity duration-300 to-zinc-900 text-white'>
+        
+          <div className='basic-city-info flex flex-row w-[289px] px-6 py-2 rounded-2xl items-center justify-between bg-gradient-to-br from-zinc-800 hover:opacity-80 transition-opacity duration-300 to-zinc-900 text-white'>
         <div className='flex flex-col gap-4 p-2'>
             <h2 className='text-2xl'>{weather.name}</h2>
             <p className='text-slate-300'>{time} • {day}</p>
             <h1 className='text-4xl'>{Math.floor(weather.main.temp)}°</h1>
         </div>
         <img width={80} src={weather.weather[0].description === "few clouds" ? "../../public/sun-cloudy.svg" : `../../public/${weather.weather[0].main}.svg`} alt="" />
-    </div>
+          </div>
 
-    <div className='hourly-weather-info w-11/12 bg-gradient-to-br from-slate-800 to-slate-900 text-white'>
+          <div className='hourly-weather-info w-11/12 bg-gradient-to-br from-slate-800 rounded-2xl to-slate-900 flex flex-row gap-4 items-center justify-center text-white'>
+            {forecast.length > 0 && (
 
-    </div>
-        </div>
+            <div className='forecast'>
+              <div className='forecast-days flex flex-row gap-12 py-8 px-4 items-center justify-center'>
+                {forecast.map((item, index) => (
+                  <div key={index} className='forecast-day flex flex-col gap-6 items-center justify-center'>
+                    <p >{new Date(item.dt * 1000).toLocaleDateString("en-US", {
+                weekday: "short",
+              })}</p>
+                    <img width={80} src={item.weather[0].description === "few clouds" ? "../../public/sun-cloudy.svg" : `../../public/${item.weather[0].main}.svg`} alt="" />
+                    <p>{Math.floor(item.main.temp)}°</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          
+          )}
 
-        <div className='weekly-weather-info w-4/6 bg-gradient-to-br from-zinc-800 to-zinc-900 text-white'>
+          </div>
 
-        </div>
 
     </section>
       ) }
